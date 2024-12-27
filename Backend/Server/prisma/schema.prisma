@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for days
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+// Enum for grades
+enum Grade {
+  A
+  B
+  C
+  D
+  F
+}
+
+// Enum for attendance status
+enum Status {
+  PRESENT
+  ABSENT
+}
+
+// Enum for institution types
+enum InstitutionType {
+  SCHOOL
+  COLLEGE
+  UNIVERSITY
+  OTHER
+}
+
+model Institution {
+  id            String          @id @default(cuid())
+  name          String
+  type          InstitutionType
+  instituteId   String          @unique
+  password      String
+  address       String
+  contactEmail  String
+  contactPhone  String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  departments   Department[]
+  faculties     Faculty[]
+  students      Student[]
+  courses       Course[]
+  events        Event[]
+  notifications Notification[]
+}
+
+model Department {
+  id            String      @id @default(cuid())
+  name          String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  institutionId String
+  courses       Course[]
+  faculties     Faculty[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Faculty {
+  id            String       @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String       @unique
+  phone         String       @unique
+  designation   String
+  department    Department   @relation(fields: [departmentId], references: [id])
+  departmentId  String
+  classes       Class[]      @relation("FacultyClasses")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  institutionId String?
+  routines      Routine[]
+}
+
+model Student {
+  id            String       @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String       @unique
+  phone         String       @unique
+  enrollmentNo  String       @unique
+  course        Course       @relation(fields: [courseId], references: [id])
+  courseId      String
+  class         Class        @relation(fields: [classId], references: [id])
+  classId       String
+  attendance    Attendance[]
+  examResults   ExamResult[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  institutionId String?
+}
+
+model Course {
+  id            String       @id @default(cuid())
+  name          String
+  code          String       @unique
+  description   String
+  department    Department   @relation(fields: [departmentId], references: [id])
+  departmentId  String
+  classes       Class[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  institutionId String?
+  students      Student[]
+}
+
+model Class {
+  id         String       @id @default(cuid())
+  name       String
+  semester   String?
+  course     Course       @relation(fields: [courseId], references: [id])
+  courseId   String
+  faculties  Faculty[]    @relation("FacultyClasses")
+  students   Student[]
+  routines   Routine[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  attendance Attendance[]
+  exams      Exam[]
+}
+
+model Routine {
+  id        String   @id @default(cuid())
+  day       Day
+  startTime DateTime
+  endTime   DateTime
+  class     Class    @relation(fields: [classId], references: [id])
+  classId   String
+  subject   String
+  faculty   Faculty  @relation(fields: [facultyId], references: [id])
+  facultyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  date      DateTime
+  status    Status
+  class     Class    @relation(fields: [classId], references: [id])
+  classId   String
+  student   Student  @relation(fields: [studentId], references: [id])
+  studentId String
+  createdAt DateTime @default(now())
+}
+
+model Exam {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  date        DateTime
+  class       Class        @relation(fields: [classId], references: [id])
+  classId     String
+  results     ExamResult[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ExamResult {
+  id        String  @id @default(cuid())
+  marks     Float
+  grade     Grade
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String
+  exam      Exam    @relation(fields: [examId], references: [id])
+  examId    String
+}
+
+model Event {
+  id            String       @id @default(cuid())
+  title         String
+  description   String
+  date          DateTime
+  location      String
+  createdAt     DateTime     @default(now())
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  institutionId String?
+}
+
+model Notification {
+  id            String       @id @default(cuid())
+  title         String
+  content       String
+  createdAt     DateTime     @default(now())
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  institutionId String?
+}
